@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VacTrack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8f7f4;color:#1a1a1a;min-height:100vh}
+@media(prefers-color-scheme:dark){
+  .app-title{color:#fff}
+  .tab.active{color:#fff;border-bottom-color:#fff}
+  .task-section-title{color:#fff}
+}
+:root{--pink:#e4007c;--pink-dark:#a8005a}
+/* ── AUTH ── */
+.auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
+.auth-box{background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+.auth-title{font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px}
+.auth-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.auth-field{margin-bottom:12px}
+.auth-field label{display:block;font-size:12px;color:#666;font-weight:500;margin-bottom:4px}
+.auth-field input{width:100%;font-family:inherit;font-size:16px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;outline:none;background:#fff;color:#1a1a1a}
+.auth-field input:focus{border-color:#999}
+.auth-btn{width:100%;padding:12px;font-size:15px;font-weight:600;border:none;border-radius:10px;background:#1a1a1a;color:#fff;cursor:pointer;margin-top:8px;font-family:inherit}
+.auth-btn:hover{opacity:0.85}
+.auth-btn:disabled{opacity:0.4;cursor:not-allowed}
+.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:#888}
+.auth-switch button{background:none;border:none;color:var(--pink);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500}
+.auth-error{background:#fdf2f2;color:#c0392b;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none}
+.auth-error.show{display:block}
+/* ── APP ── */
+.app-screen{display:none;padding:1.25rem 1rem 5rem}
+.app-screen.show{display:block}
+.app-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.app-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.signout-btn{background:none;border:none;font-size:12px;color:#aaa;cursor:pointer;font-family:inherit}
+.signout-btn:hover{color:#888}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:1.25rem}
+.stat{background:#fff;border:1px solid #e5e3de;border-radius:10px;padding:8px 10px;cursor:pointer;transition:border-color 0.15s}
+.stat:hover{border-color:#aaa}
+.stat.active{border-color:var(--pink);background:var(--pink)}
+.stat.active .stat-n,.stat.active .stat-l{color:#fff}
+.stat-n{font-size:18px;font-weight:700}
+.stat-l{font-size:9px;color:#888;margin-top:1px;line-height:1.3}
+.tabs{display:flex;border-bottom:1px solid #e5e3de;margin-bottom:1.25rem}
+.tab{padding:8px 18px;font-size:13px;cursor:pointer;color:#888;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:600}
+.btn-row{display:flex;justify-content:flex-end;margin-bottom:1rem;gap:8px}
+button{font-family:inherit;cursor:pointer}
+.btn{padding:7px 16px;font-size:13px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.btn:hover{background:#f0eeea}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-primary:hover{opacity:0.85}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed}
+.btn-sm{padding:4px 10px;font-size:12px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#666}
+.btn-sm:hover{background:#f0eeea}
+.btn-danger{color:#c0392b;border-color:#f5b7b1}
+.btn-danger:hover{background:#fdf2f2}
+.btn-ghost{padding:4px 10px;font-size:12px;border:none;background:none;color:#888;cursor:pointer}
+.btn-ghost:hover{color:#1a1a1a}
+.btn-icon{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0 4px;line-height:1}
+.btn-icon:hover{color:#c0392b}
+.search-sort-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.search-input{flex:1;font-family:inherit;font-size:14px;padding:7px 12px;border:1px solid #e5e3de;border-radius:20px;outline:none;background:#fff;color:#1a1a1a}
+.search-input:focus{border-color:#aaa}
+.sort-select{font-family:inherit;font-size:12px;padding:7px 10px;border:1px solid #e5e3de;border-radius:20px;outline:none;background:#fff;color:#888;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.card{background:#fff;border:1px solid #e5e3de;border-radius:12px;padding:14px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s}
+.card:hover{border-color:#bbb;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.card.passing{border-style:dashed}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cname{font-size:14px;font-weight:600}
+.crole{font-size:12px;color:#888}
+.card-note{font-size:12px;color:#666;line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pill{font-size:11px;padding:2px 9px;border-radius:20px;border:none;font-weight:500}
+.pill-want{background:#dbeafe;color:#1e40af}
+.pill-met{background:#f0fdf4;color:#166534}
+.pill-passing{background:#f5f3ff;color:#5b21b6}
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{padding:4px 13px;font-size:12px;border:1px solid #e5e3de;border-radius:20px;background:#fff;color:#888;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.filter-btn.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1.25rem}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500}
+.field input,.field textarea,.field select{width:100%;font-family:inherit;font-size:16px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;outline:none;-webkit-appearance:none;appearance:none;height:38px}
+.field select{height:38px}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#999}
+.field textarea{resize:vertical;min-height:64px;height:auto}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-hint{font-size:11px;color:#aaa;margin-top:4px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f0eeea}
+.date-row{display:flex;align-items:center;gap:6px}
+.date-row input{flex:1}
+.date-clear{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;height:auto}
+.date-clear:hover{color:#888}
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.detail-overlay.open{display:flex}
+.detail{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:540px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.detail-head{display:flex;align-items:center;gap:14px;margin-bottom:1.25rem}
+.detail-name{font-size:18px;font-weight:600}
+.detail-role{font-size:13px;color:#888;margin-top:2px}
+.detail-meta{font-size:12px;color:#aaa;margin-top:3px}
+.section-label{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;margin-top:14px}
+.detail-text{font-size:13px;color:#1a1a1a;line-height:1.6;background:#f8f7f4;border-radius:8px;padding:10px 12px}
+.detail-foot{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f0eeea}
+.task-section{margin-bottom:1.5rem}
+.task-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.task-section-title{font-size:13px;font-weight:600}
+.task-section-sub{font-size:12px;font-weight:400;color:#888;margin-left:4px}
+.task-list{display:flex;flex-direction:column;gap:6px}
+.task-item{background:#fff;border:1px solid #e5e3de;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px}
+.task-item.completed{opacity:0.55}
+.task-check{width:15px;height:15px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:var(--pink)}
+.task-content{flex:1}
+.task-name{font-size:13px;font-weight:500}
+.task-name.done{text-decoration:line-through;color:#aaa}
+.task-meta{font-size:12px;color:#888;margin-top:2px}
+.task-overdue{color:#c0392b}
+.task-contact-link{font-size:11px;margin-top:2px;font-weight:500}
+.badge{font-size:10px;padding:1px 6px;border-radius:20px;margin-left:5px;font-weight:500}
+.badge-auto{background:#f0eeea;color:#888}
+.empty{text-align:center;padding:2rem;font-size:13px;color:#aaa}
+.divider{height:1px;background:#f0eeea;margin:1.5rem 0}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity 0.3s;z-index:200;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.profile-task{background:#f8f7f4;border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:4px}
+.profile-task-check{width:14px;height:14px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:var(--pink)}
+.profile-task-name{font-size:13px;flex:1}
+.profile-task-name.done{text-decoration:line-through;color:#aaa}
+.fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--pink);color:#fff;border:none;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(228,0,124,0.35);z-index:100;cursor:pointer;transition:transform 0.15s}
+.fab:hover{transform:scale(1.07)}
+.fab.hidden{display:none}
+.wizard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:150;align-items:flex-end;justify-content:center}
+.wizard-overlay.open{display:flex}
+.wizard{background:#fff;border-radius:20px 20px 0 0;padding:2rem 1.5rem calc(2.5rem + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.15);position:relative;z-index:1}
+.wizard-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.wizard-step-label{font-size:11px;color:#aaa;letter-spacing:0.05em;text-transform:uppercase}
+.wizard-topbar-actions{display:flex;gap:12px;align-items:center}
+.wizard-icon-btn{background:none;border:none;font-size:22px;cursor:pointer;color:#ccc;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent}
+.wizard-icon-btn.save{color:var(--pink)}
+.wizard-icon-btn:hover{color:#1a1a1a}
+.wizard-q{font-size:20px;font-weight:600;margin-bottom:1.25rem;line-height:1.3}
+.wizard-input{width:100%;font-family:inherit;font-size:16px;padding:12px 14px;border:1.5px solid #ddd;border-radius:10px;outline:none;background:#fff;color:#1a1a1a}
+.wizard-input:focus{border-color:var(--pink)}
+.wizard-big-btn{width:100%;padding:14px;font-size:15px;font-weight:600;border:none;border-radius:12px;background:#e5e3de;color:#aaa;margin-top:1.25rem;transition:background 0.15s,color 0.15s;cursor:not-allowed}
+.wizard-big-btn.ready{background:#1a1a1a;color:#fff;cursor:pointer}
+.wizard-nav{display:flex;align-items:center;margin-top:10px}
+.wizard-back{background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px 0;-webkit-tap-highlight-color:transparent}
+.wizard-back:hover{color:#1a1a1a}
+.wizard-done{text-align:center;padding:1rem 0}
+.wizard-done-title{font-size:18px;font-weight:600;margin-bottom:8px}
+.wizard-done-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.action-point-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.action-point-row input{flex:1;font-family:inherit;font-size:16px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;outline:none;height:38px}
+.action-point-row input:focus{border-color:#999}
+.remove-ap{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0 4px}
+.remove-ap:hover{color:#c0392b}
+.add-ap-btn{font-size:13px;color:#666;background:#f0eeea;border:1px solid #e5e3de;border-radius:8px;padding:8px 14px;cursor:pointer;width:100%;margin-top:4px;text-align:center}
+.add-ap-btn:hover{background:#e8e6e0}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:340px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.confirm-title{font-size:16px;font-weight:600;margin-bottom:8px}
+.confirm-sub{font-size:13px;color:#888;margin-bottom:1.25rem}
+.confirm-btns{display:flex;gap:10px}
+.confirm-btns .btn{flex:1;padding:10px}
+.loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:14px;color:#888}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">Loading...</div>
+
+<!-- Auth screen -->
+<div class="auth-screen" id="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-title">VacTrack</div>
+    <div class="auth-sub" id="auth-sub">Sign in to continue</div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="auth-field"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="auth-btn" id="auth-btn" onclick="authSubmit()">Sign in</button>
+    <div class="auth-switch"><span id="auth-switch-text">Don't have an account?</span> <button onclick="toggleAuthMode()" id="auth-switch-btn">Sign up</button></div>
+  </div>
+</div>
+
+<!-- Main app -->
+<div class="app-screen" id="app-screen">
+  <div class="app-header">
+    <div class="app-title">VacTrack</div>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat" id="stat-total" onclick="statClick('total')"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total contacts</div></div>
+    <div class="stat" id="stat-contacts" onclick="statClick('contacts')"><div class="stat-n" id="s-contacts">0</div><div class="stat-l">Proper meetings</div></div>
+    <div class="stat" id="stat-want" onclick="statClick('want')"><div class="stat-n" id="s-want">0</div><div class="stat-l">Still to meet</div></div>
+    <div class="stat" id="stat-prep" onclick="statClick('prep')"><div class="stat-n" id="s-prep">0</div><div class="stat-l">Prep tasks</div></div>
+    <div class="stat" id="stat-followup" onclick="statClick('followup')"><div class="stat-n" id="s-followup">0</div><div class="stat-l">Follow-up tasks</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-btn-people" onclick="switchTab('people',this)">People</button>
+    <button class="tab" id="tab-btn-tasks" onclick="switchTab('tasks',this)">Tasks</button>
+  </div>
+
+  <div id="tab-people">
+    <div class="search-sort-row">
+      <input class="search-input" id="search-input" placeholder="Search contacts..." oninput="renderContacts()" autocomplete="off" autocorrect="off" spellcheck="false">
+      <select class="sort-select" id="sort-select" onchange="renderContacts()">
+        <option value="alpha">A → Z</option>
+        <option value="date">Most recent</option>
+      </select>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" id="filter-met" onclick="setFilter('met',this)">Met</button>
+      <button class="filter-btn" id="filter-passing" onclick="setFilter('passing',this)">In passing</button>
+      <button class="filter-btn" id="filter-want" onclick="setFilter('want',this)">Still to meet</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="openAddContact()">+ Add contact</button>
+    </div>
+    <div class="contact-grid" id="contact-grid"></div>
+  </div>
+
+  <div id="tab-tasks" style="display:none">
+    <div class="btn-row">
+      <button class="btn" onclick="openAddTask('prep')">+ Prep task</button>
+      <button class="btn btn-primary" onclick="openAddTask('followup')">+ Follow-up task</button>
+    </div>
+    <div class="task-section" id="followup-section">
+      <div class="task-section-header">
+        <div class="task-section-title">Follow-up tasks<span class="task-section-sub">— after a meeting</span></div>
+        <button class="btn-ghost" id="toggle-followup-done" onclick="toggleShowDone('followup')" style="display:none">Show completed</button>
+      </div>
+      <div class="task-list" id="followup-task-list"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="task-section" id="prep-section">
+      <div class="task-section-header">
+        <div class="task-section-title">Prep tasks<span class="task-section-sub">— before a meeting</span></div>
+        <button class="btn-ghost" id="toggle-prep-done" onclick="toggleShowDone('prep')" style="display:none">Show completed</button>
+      </div>
+      <div class="task-list" id="prep-task-list"></div>
+    </div>
+  </div>
+</div>
+
+<button class="fab hidden" id="fab" onclick="openWizard()" title="Quick add">⚡</button>
+
+<!-- Contact modal -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Add contact</div>
+    <div class="field">
+      <label>Contact type</label>
+      <select id="f-type" onchange="onTypeChange()">
+        <option value="met">Already met</option>
+        <option value="passing">Met in passing</option>
+        <option value="want">Still want to meet</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Name</label><input id="f-name" placeholder="Sarah Chen"></div>
+      <div class="field"><label>Role / title</label><input id="f-role" placeholder="Partner"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Practice area / department</label><input id="f-dept" placeholder="Corporate 125"></div>
+      <div class="field">
+        <label>Date met (optional)</label>
+        <div class="date-row">
+          <input type="date" id="f-date" style="font-size:16px">
+          <button class="date-clear" onclick="document.getElementById('f-date').value=''">×</button>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>About them</label><textarea id="f-what" placeholder="Brief description of their role and focus..."></textarea></div>
+    <div class="field"><label>What I learned</label><textarea id="f-learned" placeholder="Key insights from your conversation..."></textarea></div>
+    <div class="field" id="ap-field">
+      <label>Action points <span id="ap-label-hint" style="font-weight:400;color:#aaa">(each becomes a follow-up task)</span></label>
+      <div id="ap-list"></div>
+      <button class="add-ap-btn" onclick="addAPRow()">+ Add action point</button>
+    </div>
+    <div class="field">
+      <label>Photo URL (optional)</label>
+      <input id="f-photo" placeholder="https://example.com/photo.jpg">
+      <div class="field-hint">Must be a direct image URL ending in .jpg or .png — LinkedIn photos won't work.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeContactModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-title" id="task-modal-title">Add task</div>
+    <input type="hidden" id="t-kind" value="prep">
+    <div class="field"><label>Task</label><input id="t-name" placeholder="Research M&A practice area" oninput="updateSaveBtn()"></div>
+    <div class="field">
+      <label>Linked contact (optional)</label>
+      <select id="t-contact"><option value="">— none —</option></select>
+    </div>
+    <div class="field">
+      <label>Due date (optional)</label>
+      <div class="date-row">
+        <input type="date" id="t-due" style="font-size:16px">
+        <button class="date-clear" onclick="document.getElementById('t-due').value=''">×</button>
+      </div>
+    </div>
+    <div class="field"><label>Notes (optional)</label><textarea id="t-notes" placeholder="Any extra context..."></textarea></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-task-btn" onclick="saveTask()" disabled>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail view -->
+<div class="detail-overlay" id="detail-modal">
+  <div class="detail">
+    <div class="detail-head">
+      <div id="d-avatar"></div>
+      <div>
+        <div class="detail-name" id="d-name"></div>
+        <div class="detail-role" id="d-role"></div>
+        <div class="detail-meta" id="d-meta"></div>
+        <div style="margin-top:6px" id="d-pill"></div>
+      </div>
+    </div>
+    <div id="d-what-wrap"><div class="section-label">About them</div><div class="detail-text" id="d-what"></div></div>
+    <div id="d-learned-wrap"><div class="section-label">What I learned</div><div class="detail-text" id="d-learned"></div></div>
+    <div id="d-tasks-wrap">
+      <div class="section-label">Tasks</div>
+      <div id="d-tasks-list"></div>
+    </div>
+    <div class="detail-foot">
+      <button class="btn btn-sm btn-danger" onclick="confirmDelete('contact')">Delete</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="editContact()">Edit</button>
+        <button class="btn btn-sm" onclick="closeDetail()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="confirm-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick-add wizard -->
+<div class="wizard-overlay" id="wizard-overlay" onclick="wizardBgClick(event)">
+  <div class="wizard" id="wizard-box"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut as fbSignOut}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import{getFirestore,collection,doc,getDocs,setDoc,deleteDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+const firebaseConfig={
+  apiKey:"AIzaSyBDcTODPYWXU6_iNORVc0b8mw8F77ZQ6JA",
+  authDomain:"vactrack-4df35.firebaseapp.com",
+  projectId:"vactrack-4df35",
+  storageBucket:"vactrack-4df35.firebasestorage.app",
+  messagingSenderId:"347406304599",
+  appId:"1:347406304599:web:5db44cc97a447770ae2a12"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+let currentUser=null;
+let contacts=[],tasks=[],activeFilter='all',activeTab='people',editingId=null,viewingId=null;
+let showDone={followup:false,prep:false};
+let wizData={},wizStep=0;
+let unsubContacts=null,unsubTasks=null;
+
+const COLORS=[['#dbeafe','#1e40af'],['#d1fae5','#065f46'],['#fce7f3','#9d174d'],['#ede9fe','#4c1d95'],['#fef3c7','#92400e'],['#fee2e2','#991b1b']];
+const TYPE_COLORS={met:'#166534',passing:'#5b21b6',want:'#1e40af'};
+
+function colorFor(n){return COLORS[n.charCodeAt(0)%COLORS.length];}
+function initials(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function formatDate(d){if(!d)return'';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── AUTH ──
+let authMode='signin';
+
+window.toggleAuthMode=function(){
+  authMode=authMode==='signin'?'signup':'signin';
+  document.getElementById('auth-sub').textContent=authMode==='signin'?'Sign in to continue':'Create your account';
+  document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Sign up';
+  document.getElementById('auth-switch-text').textContent=authMode==='signin'?"Don't have an account?":'Already have an account?';
+  document.getElementById('auth-switch-btn').textContent=authMode==='signin'?'Sign up':'Sign in';
+  document.getElementById('auth-error').classList.remove('show');
+};
+
+window.authSubmit=async function(){
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  const btn=document.getElementById('auth-btn');
+  const err=document.getElementById('auth-error');
+  if(!email||!password)return;
+  btn.disabled=true;
+  err.classList.remove('show');
+  try{
+    if(authMode==='signin'){await signInWithEmailAndPassword(auth,email,password);}
+    else{await createUserWithEmailAndPassword(auth,email,password);}
+  }catch(e){
+    err.textContent=e.code==='auth/invalid-credential'?'Incorrect email or password.':e.code==='auth/email-already-in-use'?'An account with this email already exists.':e.code==='auth/weak-password'?'Password must be at least 6 characters.':'Something went wrong. Please try again.';
+    err.classList.add('show');
+    btn.disabled=false;
+  }
+};
+
+window.signOut=async function(){
+  if(unsubContacts)unsubContacts();
+  if(unsubTasks)unsubTasks();
+  await fbSignOut(auth);
+};
+
+// ── FIRESTORE ──
+function userCol(name){return collection(db,`users/${currentUser.uid}/${name}`);}
+function userDoc(name,id){return doc(db,`users/${currentUser.uid}/${name}/${id}`);}
+
+function listenToData(){
+  if(unsubContacts)unsubContacts();
+  if(unsubTasks)unsubTasks();
+  unsubContacts=onSnapshot(userCol('contacts'),snap=>{
+    contacts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    render();
+  });
+  unsubTasks=onSnapshot(userCol('tasks'),snap=>{
+    tasks=snap.docs.map(d=>({id:d.id,...d.data()}));
+    render();
+  });
+}
+
+async function saveContact(contactData){await setDoc(userDoc('contacts',contactData.id),contactData);}
+async function saveTask(taskData){await setDoc(userDoc('tasks',taskData.id),taskData);}
+async function deleteContactDoc(id){await deleteDoc(userDoc('contacts',id));}
+async function deleteTaskDoc(id){await deleteDoc(userDoc('tasks',id));}
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth,user=>{
+  document.getElementById('loading').style.display='none';
+  if(user){
+    currentUser=user;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app-screen').classList.add('show');
+    document.getElementById('fab').classList.remove('hidden');
+    listenToData();
+  } else {
+    currentUser=null;
+    contacts=[];tasks=[];
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app-screen').classList.remove('show');
+    document.getElementById('fab').classList.add('hidden');
+  }
+});
+
+// ── RENDER ──
+function avatarEl(c,size=38){
+  const [bg,fg]=colorFor(c.name);
+  const d=document.createElement('div');
+  d.style.cssText=`width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.34)}px;font-weight:600;flex-shrink:0;overflow:hidden`;
+  if(c.photo){const img=document.createElement('img');img.src=c.photo;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';img.onerror=()=>{d.removeChild(img);d.style.background=bg;d.style.color=fg;d.textContent=initials(c.name);};d.appendChild(img);}
+  else{d.style.background=bg;d.style.color=fg;d.textContent=initials(c.name);}
+  return d;
+}
+
+function updateStats(){
+  const met=contacts.filter(c=>c.type==='met').length;
+  const passing=contacts.filter(c=>c.type==='passing').length;
+  document.getElementById('s-total').textContent=met+passing;
+  document.getElementById('s-contacts').textContent=met;
+  document.getElementById('s-want').textContent=contacts.filter(c=>c.type==='want').length;
+  document.getElementById('s-prep').textContent=tasks.filter(t=>t.kind==='prep'&&!t.done).length;
+  document.getElementById('s-followup').textContent=tasks.filter(t=>t.kind==='followup'&&!t.done).length;
+  updateStatHighlights();
+}
+
+function updateStatHighlights(){
+  document.getElementById('stat-total').classList.remove('active');
+  document.getElementById('stat-contacts').classList.toggle('active',activeTab==='people'&&activeFilter==='met');
+  document.getElementById('stat-want').classList.toggle('active',activeTab==='people'&&activeFilter==='want');
+  document.getElementById('stat-prep').classList.remove('active');
+  document.getElementById('stat-followup').classList.remove('active');
+}
+
+function render(){updateStats();renderContacts();renderTaskSection('followup','followup-task-list');renderTaskSection('prep','prep-task-list');}
+
+window.statClick=function(type){
+  if(type==='total'){doSwitchTab('people');doSetFilter('all');}
+  else if(type==='contacts'){doSwitchTab('people');doSetFilter('met');}
+  else if(type==='want'){doSwitchTab('people');doSetFilter('want');}
+  else if(type==='prep'){doSwitchTab('tasks');setTimeout(()=>document.getElementById('prep-section').scrollIntoView({behavior:'smooth'}),50);}
+  else if(type==='followup'){doSwitchTab('tasks');setTimeout(()=>document.getElementById('followup-section').scrollIntoView({behavior:'smooth'}),50);}
+  updateStatHighlights();
+};
+
+function doSwitchTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-btn-'+t).classList.add('active');
+  document.getElementById('tab-people').style.display=t==='people'?'':'none';
+  document.getElementById('tab-tasks').style.display=t==='tasks'?'':'none';
+}
+
+function doSetFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('filter-'+f);
+  if(btn)btn.classList.add('active');
+  renderContacts();
+}
+
+window.switchTab=function(t,el){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-people').style.display=t==='people'?'':'none';
+  document.getElementById('tab-tasks').style.display=t==='tasks'?'':'none';
+  updateStatHighlights();
+};
+
+window.setFilter=function(f,el){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderContacts();
+  updateStatHighlights();
+};
+
+function renderContacts(){
+  const grid=document.getElementById('contact-grid');
+  const query=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  const sort=document.getElementById('sort-select')?.value||'alpha';
+  let list=contacts;
+  if(activeFilter==='met')list=list.filter(c=>c.type==='met');
+  else if(activeFilter==='want')list=list.filter(c=>c.type==='want');
+  else if(activeFilter==='passing')list=list.filter(c=>c.type==='passing');
+  if(query)list=list.filter(c=>[c.name,c.role,c.dept].filter(Boolean).join(' ').toLowerCase().includes(query));
+  if(sort==='alpha')list=[...list].sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==='date')list=[...list].sort((a,b)=>{if(!a.dateMet&&!b.dateMet)return 0;if(!a.dateMet)return 1;if(!b.dateMet)return -1;return b.dateMet>a.dateMet?1:b.dateMet<a.dateMet?-1:0;});
+  if(!list.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1">${query?'No contacts match your search.':'No contacts yet.'}</div>`;return;}
+  grid.innerHTML='';
+  list.forEach(c=>{
+    const div=document.createElement('div');
+    div.className=`card${c.type==='passing'?' passing':''}`;
+    div.onclick=()=>openDetail(c.id);
+    const pill=c.type==='want'?`<span class="pill pill-want">Want to meet</span>`:c.type==='passing'?`<span class="pill pill-passing">In passing</span>`:`<span class="pill pill-met">Met</span>`;
+    const note=c.what||c.learned||'No notes yet.';
+    const pendingTasks=tasks.filter(t=>t.contactId===c.id&&!t.done).length;
+    const taskBadge=pendingTasks>0?`<span style="font-size:11px;color:#888;margin-left:8px">${pendingTasks} task${pendingTasks>1?'s':''} pending</span>`:'';
+    div.innerHTML=`<div class="card-head"><div class="av"></div><div><div class="cname">${c.name}</div><div class="crole">${[c.role,c.dept].filter(Boolean).join(' · ')}</div></div></div><div class="card-note">${note}</div><div style="display:flex;align-items:center">${pill}${taskBadge}</div>`;
+    div.querySelector('.av').replaceWith(avatarEl(c,38));
+    grid.appendChild(div);
+  });
+}
+
+function renderTaskSection(kind,listId){
+  const list=document.getElementById(listId);
+  const today=todayStr();
+  const showCompleted=showDone[kind];
+  const allOfKind=tasks.filter(t=>t.kind===kind);
+  const visible=allOfKind.filter(t=>!t.done||showCompleted);
+  const sorted=visible.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;if(a.due&&b.due)return a.due<b.due?-1:1;return 0;});
+  const btn=document.getElementById(`toggle-${kind}-done`);
+  const completedCount=allOfKind.filter(t=>t.done).length;
+  if(btn){btn.style.display=completedCount>0?'':'none';btn.textContent=showCompleted?'Hide completed':`Show completed (${completedCount})`;}
+  if(!sorted.length){list.innerHTML=`<div class="empty">No ${kind==='prep'?'prep':'follow-up'} tasks yet.</div>`;return;}
+  list.innerHTML='';
+  sorted.forEach(t=>{
+    const overdue=t.due&&t.due<today&&!t.done;
+    const contact=t.contactId?contacts.find(c=>c.id===t.contactId):null;
+    const contactColor=contact?TYPE_COLORS[contact.type]||'#888':'';
+    const contactLink=contact?`<div class="task-contact-link" style="color:${contactColor}">→ ${contact.name}</div>`:'';
+    const item=document.createElement('div');
+    item.className=`task-item${t.done?' completed':''}`;
+    const autoBadge=t.auto?`<span class="badge badge-auto">auto</span>`:'';
+    const meta=t.due?`Due ${formatDate(t.due)}${overdue?' ⚠':''}`:t.notes||'';
+    item.innerHTML=`<input type="checkbox" class="task-check" ${t.done?'checked':''}><div class="task-content"><div class="task-name ${t.done?'done':''}">${t.name}${autoBadge}</div>${contactLink}${meta?`<div class="task-meta ${overdue?'task-overdue':''}">${meta}</div>`:''}</div><button class="btn-icon">✕</button>`;
+    item.querySelector('.task-check').onchange=()=>toggleTask(t.id,t.done);
+    item.querySelector('.btn-icon').onclick=e=>{e.stopPropagation();confirmDelete('task',t.id);};
+    list.appendChild(item);
+  });
+}
+
+window.toggleShowDone=function(kind){showDone[kind]=!showDone[kind];renderTaskSection(kind,`${kind}-task-list`);};
+
+// ── CONTACT FORM ──
+window.onTypeChange=function(){
+  const type=document.getElementById('f-type').value;
+  document.getElementById('ap-label-hint').textContent=type==='want'?'(each becomes a prep task)':'(each becomes a follow-up task)';
+  if(type==='want'||type==='passing'){
+    const existing=[...document.querySelectorAll('#ap-list .action-point-row input')].map(i=>i.value.trim()).filter(Boolean);
+    const hasDefault=existing.length===1&&existing[0]==='Send post-meeting email/Teams message';
+    if(hasDefault||existing.length===0)document.getElementById('ap-list').innerHTML='';
+  } else {
+    const existing=[...document.querySelectorAll('#ap-list .action-point-row input')].map(i=>i.value.trim()).filter(Boolean);
+    if(existing.length===0)buildAPList();
+  }
+};
+
+function buildAPList(items=[]){
+  const container=document.getElementById('ap-list');container.innerHTML='';
+  (items.length?items:['Send post-meeting email/Teams message']).forEach(val=>addAPRow(val));
+}
+
+function buildAPListEmpty(items=[]){
+  const container=document.getElementById('ap-list');container.innerHTML='';
+  items.forEach(val=>addAPRow(val));
+}
+
+window.addAPRow=function(val=''){
+  const container=document.getElementById('ap-list');
+  const row=document.createElement('div');row.className='action-point-row';
+  row.innerHTML=`<input type="text" placeholder="Action point..." value="${val}"><button class="remove-ap" onclick="this.parentElement.remove()">×</button>`;
+  const input=row.querySelector('input');
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&input.value.trim()){e.preventDefault();window.addAPRow();container.lastElementChild.querySelector('input').focus();}});
+  container.appendChild(row);
+};
+
+function getAPValues(){return[...document.querySelectorAll('#ap-list .action-point-row input')].map(i=>i.value.trim()).filter(Boolean);}
+function showFab(v){document.getElementById('fab').classList.toggle('hidden',!v);}
+
+window.openAddContact=function(){
+  editingId=null;
+  ['f-name','f-role','f-dept','f-photo','f-what','f-learned'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=todayStr();
+  document.getElementById('f-type').value='met';
+  document.getElementById('ap-label-hint').textContent='(each becomes a follow-up task)';
+  buildAPList();
+  document.getElementById('modal-title').textContent='Add contact';
+  document.getElementById('contact-modal').classList.add('open');
+  showFab(false);
+};
+
+window.closeContactModal=function(){document.getElementById('contact-modal').classList.remove('open');editingId=null;showFab(true);};
+
+window.saveContact=async function(){
+  const name=document.getElementById('f-name').value.trim();if(!name)return;
+  const type=document.getElementById('f-type').value;
+  const aps=getAPValues();
+  const taskKind=type==='want'?'prep':'followup';
+  const id=editingId||Date.now().toString();
+  const contactData={id,name,role:document.getElementById('f-role').value.trim(),dept:document.getElementById('f-dept').value.trim(),photo:document.getElementById('f-photo').value.trim(),dateMet:document.getElementById('f-date').value,what:document.getElementById('f-what').value.trim(),learned:document.getElementById('f-learned').value.trim(),type};
+  await saveContact(contactData);
+  if(editingId){
+    const oldAutoTasks=tasks.filter(t=>t.contactId===editingId&&t.auto);
+    for(const t of oldAutoTasks)await deleteTaskDoc(t.id);
+  }
+  for(let i=0;i<aps.length;i++){
+    await saveTask({id:`auto-${id}-${i}-${Date.now()}`,name:aps[i],kind:taskKind,contactId:id,due:'',notes:'',done:false,auto:true});
+  }
+  if(aps.length===0&&type==='want'){
+    await saveTask({id:`prep-auto-${id}-${Date.now()}`,name:`Reach out to ${name} to arrange a meeting`,kind:'prep',contactId:id,due:'',notes:'',done:false,auto:true});
+  }
+  toast(editingId?'Contact updated':'Contact added');
+  window.closeContactModal();
+};
+
+function populateContactDropdown(selectedId=''){
+  const sel=document.getElementById('t-contact');sel.innerHTML=`<option value="">— none —</option>`;
+  contacts.forEach(c=>{const opt=document.createElement('option');opt.value=c.id;opt.textContent=c.name;if(c.id===selectedId)opt.selected=true;sel.appendChild(opt);});
+}
+
+window.updateSaveBtn=function(){document.getElementById('save-task-btn').disabled=!document.getElementById('t-name').value.trim();};
+
+function openDetail(id){
+  viewingId=id;
+  const c=contacts.find(c=>c.id===id);
+  const slot=document.getElementById('d-avatar');slot.innerHTML='';slot.appendChild(avatarEl(c,52));
+  document.getElementById('d-name').textContent=c.name;
+  document.getElementById('d-role').textContent=[c.role,c.dept].filter(Boolean).join(' · ');
+  document.getElementById('d-meta').textContent=c.dateMet?`Met ${formatDate(c.dateMet)}`:'';
+  const pillMap={met:`<span class="pill pill-met">Met</span>`,passing:`<span class="pill pill-passing">In passing</span>`,want:`<span class="pill pill-want">Want to meet</span>`};
+  document.getElementById('d-pill').innerHTML=pillMap[c.type]||'';
+  const show=(wid,tid,val)=>{const w=document.getElementById(wid);w.style.display=val?'':'none';if(val)document.getElementById(tid).textContent=val;};
+  show('d-what-wrap','d-what',c.what);show('d-learned-wrap','d-learned',c.learned);
+  renderProfileTasks(id);
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function renderProfileTasks(contactId){
+  const wrap=document.getElementById('d-tasks-wrap');const listEl=document.getElementById('d-tasks-list');
+  const ct=[...tasks.filter(t=>t.contactId===contactId)].sort((a,b)=>a.done===b.done?0:a.done?1:-1);
+  if(!ct.length){wrap.style.display='none';return;}
+  wrap.style.display='';listEl.innerHTML='';
+  ct.forEach(t=>{
+    const row=document.createElement('div');row.className='profile-task';
+    row.innerHTML=`<input type="checkbox" class="profile-task-check" ${t.done?'checked':''}><div class="profile-task-name ${t.done?'done':''}">${t.name}</div>`;
+    row.querySelector('.profile-task-check').onchange=()=>toggleTask(t.id,t.done).then(()=>renderProfileTasks(contactId));
+    listEl.appendChild(row);
+  });
+}
+
+window.closeDetail=function(){document.getElementById('detail-modal').classList.remove('open');viewingId=null;};
+
+window.editContact=function(){
+  const c=contacts.find(c=>c.id===viewingId);if(!c)return;
+  editingId=c.id;window.closeDetail();
+  document.getElementById('f-name').value=c.name;
+  document.getElementById('f-role').value=c.role||'';
+  document.getElementById('f-dept').value=c.dept||'';
+  document.getElementById('f-photo').value=c.photo||'';
+  document.getElementById('f-date').value=c.dateMet||'';
+  document.getElementById('f-what').value=c.what||'';
+  document.getElementById('f-learned').value=c.learned||'';
+  document.getElementById('f-type').value=c.type||'met';
+  document.getElementById('ap-label-hint').textContent=c.type==='want'?'(each becomes a prep task)':'(each becomes a follow-up task)';
+  const existingAPs=tasks.filter(t=>t.contactId===c.id&&t.auto).map(t=>t.name);
+  if(c.type==='want'||c.type==='passing')buildAPListEmpty(existingAPs);else buildAPList(existingAPs.length?existingAPs:[]);
+  document.getElementById('modal-title').textContent='Edit contact';
+  document.getElementById('contact-modal').classList.add('open');
+  showFab(false);
+};
+
+let confirmCallback=null;
+window.confirmDelete=function(type,id){
+  const title=document.getElementById('confirm-title');const sub=document.getElementById('confirm-sub');const okBtn=document.getElementById('confirm-ok-btn');
+  if(type==='contact'){title.textContent='Delete contact?';sub.textContent="This will also delete all linked tasks. This can't be undone.";confirmCallback=async()=>{
+    if(!viewingId)return;
+    const linkedTasks=tasks.filter(t=>t.contactId===viewingId);
+    for(const t of linkedTasks)await deleteTaskDoc(t.id);
+    await deleteContactDoc(viewingId);
+    window.closeDetail();toast('Contact removed');
+  };}
+  else{title.textContent='Delete task?';sub.textContent="This can't be undone.";confirmCallback=async()=>{await deleteTaskDoc(id);toast('Task removed');};}
+  okBtn.onclick=async()=>{if(confirmCallback)await confirmCallback();closeConfirm();};
+  document.getElementById('confirm-modal').classList.add('open');
+};
+window.closeConfirm=function(){document.getElementById('confirm-modal').classList.remove('open');confirmCallback=null;};
+
+window.openAddTask=function(kind){
+  document.getElementById('t-kind').value=kind;
+  document.getElementById('task-modal-title').textContent=kind==='prep'?'Add prep task':'Add follow-up task';
+  ['t-name','t-due','t-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('save-task-btn').disabled=true;
+  populateContactDropdown();
+  document.getElementById('task-modal').classList.add('open');
+};
+window.closeTaskModal=function(){document.getElementById('task-modal').classList.remove('open');};
+
+window.saveTask=async function(){
+  const name=document.getElementById('t-name').value.trim();if(!name)return;
+  const contactId=document.getElementById('t-contact').value||null;
+  await saveTask({id:Date.now().toString(),name,kind:document.getElementById('t-kind').value,contactId,due:document.getElementById('t-due').value,notes:document.getElementById('t-notes').value.trim(),done:false,auto:false});
+  window.closeTaskModal();toast('Task added');
+};
+
+async function toggleTask(id,currentDone){
+  await setDoc(userDoc('tasks',id),{done:!currentDone},{merge:true});
+}
+
+// ── WIZARD ──
+const WIZARD_STEPS=[
+  {key:'name',q:"What's their name?",placeholder:'Sarah Chen',required:true},
+  {key:'role',q:"What's their role?",placeholder:'Partner'},
+  {key:'dept',q:'Practice area or department?',placeholder:'Corporate 125'},
+  {key:'notes',q:'Any quick notes?',placeholder:'Met in the lift after the M&A talk'},
+  {key:'actions',q:'Any action points?',placeholder:'Send a follow-up email',multi:true},
+];
+
+window.openWizard=function(){wizData={};wizStep=0;document.getElementById('wizard-overlay').classList.add('open');renderWizardStep();};
+window.closeWizard=function(){document.getElementById('wizard-overlay').classList.remove('open');};
+
+window.wizardBgClick=function(e){
+  if(e.target===document.getElementById('wizard-overlay')&&wizStep===0){
+    const inp=document.getElementById('wiz-input');
+    if(!inp||!inp.value.trim())window.closeWizard();
+  }
+};
+
+window.saveWizardEarly=async function(){
+  const s=WIZARD_STEPS[wizStep];
+  if(!s.multi){const v=document.getElementById('wiz-input')?.value.trim();if(v)wizData[s.key]=v;}
+  if(!wizData.name)return;
+  await commitWizard();window.closeWizard();
+};
+
+async function commitWizard(){
+  if(!wizData.name)return;
+  const id=Date.now().toString();
+  await saveContact({id,name:wizData.name,role:wizData.role||'',dept:wizData.dept||'',photo:'',dateMet:todayStr(),what:'',learned:wizData.notes||'',type:'passing'});
+  const actions=wizData.actions||[];
+  for(let i=0;i<actions.length;i++){
+    await saveTask({id:`auto-${id}-${i}`,name:actions[i],kind:'followup',contactId:id,due:'',notes:'',done:false,auto:true});
+  }
+  toast(`${wizData.name} saved`);
+  return id;
+}
+
+function renderWizardStep(){
+  const box=document.getElementById('wizard-box');
+  const s=WIZARD_STEPS[wizStep];
+  const isLast=wizStep===WIZARD_STEPS.length-1;
+  const backBtn=wizStep>0?`<button class="wizard-back" onclick="wizBack()">← Back</button>`:`<span></span>`;
+  const hasName=!!wizData.name;
+  const saveBtn=hasName?`<button class="wizard-icon-btn save" id="wiz-save-btn" title="Save now">✓</button>`:'<span></span>';
+  const closeBtn=`<button class="wizard-icon-btn" id="wiz-close-btn" title="Cancel">✕</button>`;
+
+  if(s.multi){
+    box.innerHTML=`<div class="wizard-topbar"><div class="wizard-step-label">Step ${wizStep+1} of ${WIZARD_STEPS.length}</div><div class="wizard-topbar-actions">${saveBtn}${closeBtn}</div></div><div class="wizard-q">${s.q}</div><div id="wiz-ap-list"></div><button class="add-ap-btn" id="wiz-add-ap" style="margin-top:8px">+ Add another</button><button class="wizard-big-btn ready" onclick="wizNext()">${isLast?'Finish':'Next'}</button><div class="wizard-nav">${backBtn}</div>`;
+    document.getElementById('wiz-close-btn').addEventListener('click',wizardCloseConfirm);
+    if(hasName)document.getElementById('wiz-save-btn').addEventListener('click',window.saveWizardEarly);
+    document.getElementById('wiz-add-ap').addEventListener('click',addWizAP);
+    addWizAP();
+  } else {
+    const savedVal=wizData[s.key]||'';
+    const isReady=!!savedVal;
+    box.innerHTML=`<div class="wizard-topbar"><div class="wizard-step-label">Step ${wizStep+1} of ${WIZARD_STEPS.length}</div><div class="wizard-topbar-actions">${saveBtn}${closeBtn}</div></div><div class="wizard-q">${s.q}</div><input class="wizard-input" id="wiz-input" placeholder="${s.placeholder}" autocomplete="off" autocorrect="off" value="${savedVal}"><button class="wizard-big-btn ${isReady?'ready':''}" id="wiz-btn" onclick="wizNext()">${s.required?(isReady?'Next':'Next'):(isReady?(isLast?'Finish':'Next'):'Skip')}</button><div class="wizard-nav">${backBtn}</div>`;
+    document.getElementById('wiz-close-btn').addEventListener('click',wizardCloseConfirm);
+    if(hasName)document.getElementById('wiz-save-btn').addEventListener('click',window.saveWizardEarly);
+    const input=document.getElementById('wiz-input');
+    const btn=document.getElementById('wiz-btn');
+    if(s.required){
+      btn.classList.toggle('ready',isReady);
+      if(!isReady)btn.style.pointerEvents='none';
+      input.addEventListener('input',()=>{
+        const has=!!input.value.trim();
+        btn.classList.toggle('ready',has);
+        btn.style.pointerEvents=has?'':'none';
+        wizData[s.key]=input.value.trim();
+        const topbar=document.querySelector('.wizard-topbar-actions');
+        if(topbar){
+          const existing=topbar.querySelector('.wizard-icon-btn.save');
+          if(has&&!existing){const sb=document.createElement('button');sb.className='wizard-icon-btn save';sb.title='Save now';sb.textContent='✓';sb.addEventListener('click',window.saveWizardEarly);topbar.insertBefore(sb,topbar.firstChild);}
+          else if(!has&&existing)existing.remove();
+        }
+      });
+    } else {
+      input.addEventListener('input',()=>{
+        const has=!!input.value.trim();
+        btn.textContent=has?(isLast?'Finish':'Next'):'Skip';
+        btn.classList.toggle('ready',has);
+      });
+    }
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(!s.required||input.value.trim())wizNext();}});
+    setTimeout(()=>{input.focus();try{input.setSelectionRange(input.value.length,input.value.length);}catch(e){}},50);
+    setTimeout(()=>input.focus(),150);
+    requestAnimationFrame(()=>input.focus());
+  }
+}
+
+function wizardCloseConfirm(){
+  if(!wizData.name){window.closeWizard();return;}
+  if(window.confirm('Close without saving?'))window.closeWizard();
+}
+
+function addWizAP(){
+  const list=document.getElementById('wiz-ap-list');
+  const row=document.createElement('div');row.className='action-point-row';
+  row.innerHTML=`<input type="text" class="wizard-input" placeholder="Action point..." style="margin-bottom:8px"><button class="remove-ap" type="button">×</button>`;
+  const input=row.querySelector('input');
+  row.querySelector('.remove-ap').addEventListener('click',()=>row.remove());
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&input.value.trim()){e.preventDefault();addWizAP();}});
+  list.appendChild(row);input.focus();
+}
+
+window.wizNext=function(){
+  const s=WIZARD_STEPS[wizStep];
+  if(s.multi){const vals=[...document.querySelectorAll('#wiz-ap-list input')].map(i=>i.value.trim()).filter(Boolean);if(vals.length)wizData[s.key]=vals;}
+  else{const val=document.getElementById('wiz-input')?.value.trim();if(s.required&&!val)return;if(val)wizData[s.key]=val;}
+  if(wizStep<WIZARD_STEPS.length-1){wizStep++;renderWizardStep();}
+  else{finishWizard();}
+};
+
+window.wizBack=function(){if(wizStep>0){wizStep--;renderWizardStep();}};
+
+async function finishWizard(){
+  if(!wizData.name){window.closeWizard();return;}
+  const id=await commitWizard();
+  const box=document.getElementById('wizard-box');
+  box.innerHTML=`<div class="wizard-done"><div class="wizard-done-title">${wizData.name} added</div><div class="wizard-done-sub">Saved as a passing contact${wizData.actions?.length?' with '+wizData.actions.length+' action point'+(wizData.actions.length>1?'s':''):''}.</div><button class="btn btn-primary" style="width:100%;padding:12px;margin-bottom:10px" id="wiz-detail-btn">Add more detail</button><button class="btn" style="width:100%;padding:12px" id="wiz-done-btn">Done</button></div>`;
+  document.getElementById('wiz-detail-btn').addEventListener('click',()=>{window.closeWizard();viewingId=id;window.editContact();});
+  document.getElementById('wiz-done-btn').addEventListener('click',window.closeWizard);
+}
+</script>
+</body>
+</html>
